@@ -1,0 +1,68 @@
+
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+int laststate1=LOW;
+int currentstate1=LOW;
+int switch1=3;
+
+int laststate2=LOW;
+int currentstate2=LOW;
+int switch2 =5;
+
+boolean debounce1(boolean last)
+{
+  currentstate1=digitalRead(switch1);
+  if(currentstate1!=last)
+  {                                               //DEBOUNCE FOR SWITCH 1
+ delay(30);
+  currentstate1=digitalRead(switch1);
+  }
+  return currentstate1;
+}
+boolean debounce2(boolean last)
+{
+  currentstate2=digitalRead(switch2);
+  if(currentstate2!=last)
+  {                                               //DEBOUNCE   FOR SWITCH 2
+ delay(30);
+  currentstate2=digitalRead(switch2);
+  }
+return currentstate2;
+}
+
+char text1,text2;
+RF24 radio(7, 8); // CE, CSN
+const byte address[6] = "00001";
+void setup() {
+  radio.begin();
+  radio.openWritingPipe(address);
+  radio.setPALevel(0);
+  radio.stopListening();
+  Serial.begin(9600);
+  pinMode(switch1,INPUT);
+  pinMode(switch2,INPUT);
+  
+}
+void loop() {
+  int currentstate1=debounce1(laststate1);
+  int currentstate2=debounce2(laststate2);
+  if((currentstate1==HIGH)&&(laststate1==LOW))
+  {
+ text1='0';
+  radio.write(&text1, sizeof(text1));                            //IF FOR SWITCH 1 PRESS
+  Serial.println(text1);
+  Serial.println("Pressed Stop");
+  
+}
+ laststate1=currentstate1;
+ 
+ if((currentstate2==HIGH)&&(laststate2==LOW)){
+
+text2='1';
+ radio.write(&text2, sizeof(text2));                            //IF FOR SWITCH 2 PRESS
+ Serial.println(text2);
+  Serial.println("Pressed Start");
+  }
+ laststate2=currentstate2;
+}
